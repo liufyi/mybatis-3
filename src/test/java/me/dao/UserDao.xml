@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="me.dao.UserDao">
+  <select id="selectList" resultType="me.entity.UserEntity">
+    select * from user
+    <where>
+      <if test="name !=null and !name.isEmpty()">
+        <bind name="name" value="'%'+name+'%'" />
+        and name like #{name}
+        or id in
+        (
+          <foreach collection="ids" item="id" separator=",">
+            #{id}
+          </foreach>
+        )
+      </if>
+    </where>
+  </select>
+</mapper>

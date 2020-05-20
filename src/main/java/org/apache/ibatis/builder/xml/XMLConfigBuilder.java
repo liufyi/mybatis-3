@@ -103,20 +103,32 @@ public class XMLConfigBuilder extends BaseBuilder {
   private void parseConfiguration(XNode root) {
     try {
       // issue #117 read properties first
+      //1.节点<properties>属性获取
       propertiesElement(root.evalNode("properties"));
+      //2.节点<settings>属性获取
       Properties settings = settingsAsProperties(root.evalNode("settings"));
+      //3.从settings中获取对应属性值并设置
       loadCustomVfs(settings);
       loadCustomLogImpl(settings);
+      //4.注册别名
       typeAliasesElement(root.evalNode("typeAliases"));
+      //5.注册插件
       pluginElement(root.evalNode("plugins"));
+      //6.设置对象工厂,一般不会配置
       objectFactoryElement(root.evalNode("objectFactory"));
+      //7.不知道拿来干啥,没配置过
       objectWrapperFactoryElement(root.evalNode("objectWrapperFactory"));
+      //8.java反射工厂,一般不配置
       reflectorFactoryElement(root.evalNode("reflectorFactory"));
+      //9.设置全局配置,根据settings里,如果settings没配置,有默认的值
       settingsElement(settings);
       // read it after objectFactory and objectWrapperFactory issue #631
+      //11.环境设置,根据<environments>节点,只配置对应的environment id
+      //dataSource的参数也是在这个方法中设置的
       environmentsElement(root.evalNode("environments"));
       databaseIdProviderElement(root.evalNode("databaseIdProvider"));
       typeHandlerElement(root.evalNode("typeHandlers"));
+      //12.sql映射文件处理,最复杂及核心部分
       mapperElement(root.evalNode("mappers"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing SQL Mapper Configuration. Cause: " + e, e);
@@ -219,6 +231,17 @@ public class XMLConfigBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * {@code <properties>} 节点解析,即我们自定的变量<br>
+   * 变量有几部份组成<br>
+   * 1.{@code <properties>} 里定义的变量 <br>
+   * 2.{@code <properties resource="xx.properties" url="http://xx.properties">} ,
+   * resource和url属性不能都定义,只能定义其中一个<br>
+   * 3.方法传进来的参数<br>
+   * 后面的会覆盖前面的,优先级为 3->2->1
+   * @param context
+   * @throws Exception
+   */
   private void propertiesElement(XNode context) throws Exception {
     if (context != null) {
       Properties defaults = context.getChildrenAsProperties();
@@ -270,6 +293,12 @@ public class XMLConfigBuilder extends BaseBuilder {
     configuration.setConfigurationFactory(resolveClass(props.getProperty("configurationFactory")));
   }
 
+  /**
+   * {@code <environments>} 节点解析<br>
+   * 只解析environments.default = environment.id 的{@code <environment>}节点
+   * @param context
+   * @throws Exception
+   */
   private void environmentsElement(XNode context) throws Exception {
     if (context != null) {
       if (environment == null) {
